@@ -1,45 +1,28 @@
-from sqlalchemy import Integer
-from sqlalchemy import Numeric
-from sqlalchemy import String
-from sqlalchemy import Text
-
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
+from sqlalchemy import Column, Integer, String, Text, Numeric, Boolean, DateTime
+from sqlalchemy.sql import func
 
 from app.core.database import Base
 
 
 class Product(Base):
-
     __tablename__ = "products"
 
-    id: Mapped[int] = mapped_column(
-        primary_key=True,
-        index=True
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    category = Column(String(100), nullable=False, index=True)
+    price = Column(Numeric(10, 2), nullable=False)
+    stock = Column(Integer, nullable=False, default=0)
+    popularity = Column(Integer, nullable=False, default=0)
+    image_url = Column(String(500), nullable=True)
+
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now()
     )
 
-    name: Mapped[str] = mapped_column(
-        String(200),
-        nullable=False
-    )
-
-    description: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True
-    )
-
-    price: Mapped[float] = mapped_column(
-        Numeric(12, 2),
-        nullable=False
-    )
-
-    stock: Mapped[int] = mapped_column(
-        Integer,
-        default=0,
-        nullable=False
-    )
-
-    images: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now()
     )

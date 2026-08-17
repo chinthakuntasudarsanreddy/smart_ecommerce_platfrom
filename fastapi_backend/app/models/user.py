@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 
 from app.core.database import Base
-
+from sqlalchemy.orm import relationship
 
 class UserRole(str, Enum):
 
@@ -63,3 +63,9 @@ class User(Base):
         unique=True,
         nullable=True
     )
+    cart = relationship(
+    "Cart",
+    back_populates="user",
+    uselist=False,
+    cascade="all, delete-orphan"
+)

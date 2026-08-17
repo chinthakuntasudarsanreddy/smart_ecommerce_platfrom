@@ -1,44 +1,61 @@
-from sqlalchemy import ForeignKey
-from sqlalchemy import Integer
-from sqlalchemy import UniqueConstraint
-
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
+from sqlalchemy import Column, Integer, ForeignKey, Numeric
+from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
 
 class Cart(Base):
-
     __tablename__ = "carts"
 
-    id: Mapped[int] = mapped_column(
-        primary_key=True,
-        index=True
+    id = Column(Integer, primary_key=True)
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=False,
+        unique=True
     )
 
-    user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id"),
+    user = relationship(
+        "User",
+        back_populates="cart"
+    )
+
+    items = relationship(
+        "CartItem",
+        back_populates="cart",
+        cascade="all, delete-orphan"
+    )
+
+
+class CartItem(Base):
+    __tablename__ = "cart_items"
+
+    id = Column(Integer, primary_key=True)
+
+    cart_id = Column(
+        Integer,
+        ForeignKey("carts.id"),
         nullable=False
     )
 
-    product_id: Mapped[int] = mapped_column(
+    product_id = Column(
+        Integer,
         ForeignKey("products.id"),
         nullable=False
     )
 
-    quantity: Mapped[int] = mapped_column(
+    quantity = Column(
         Integer,
-        default=1,
-        nullable=False
+        nullable=False,
+        default=1
     )
 
-    __table_args__ = (
+    cart = relationship(
+        "Cart",
+        back_populates="items"
+    )
 
-        UniqueConstraint(
-            "user_id",
-            "product_id",
-            name="uq_cart_user_product"
-        ),
-
+    product = relationship(
+        "Product"
     )
