@@ -4,7 +4,6 @@ import { useAuth0 } from "@auth0/auth0-react";
 function Navbar() {
   const {
     isAuthenticated,
-    loginWithRedirect,
     logout,
   } = useAuth0();
 
@@ -17,22 +16,24 @@ function Navbar() {
 
       <div className="nav-links">
 
-        <Link to="/">Home</Link>
+        <Link to="/">
+          Home
+        </Link>
 
         <Link to="/products">
           Products
         </Link>
 
-        {isAuthenticated && (
-          <>
-            <Link to="/cart">
-              Cart
-            </Link>
+        {/* Cart always visible */}
+        <Link to="/cart">
+          Cart
+        </Link>
 
-            <Link to="/profile">
-              Profile
-            </Link>
-          </>
+        {/* Profile only after login */}
+        {isAuthenticated && (
+          <Link to="/profile">
+            Profile
+          </Link>
         )}
 
         {!isAuthenticated ? (

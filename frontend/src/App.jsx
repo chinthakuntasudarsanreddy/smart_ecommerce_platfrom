@@ -9,6 +9,9 @@ import Products from "./pages/Products";
 import Cart from "./pages/Cart";
 import Profile from "./pages/Profile";
 
+import Payment from "./pages/Payment";
+import PaymentSuccess from "./pages/PaymentSuccess";
+
 function App() {
   return (
     <>
@@ -16,11 +19,23 @@ function App() {
 
       <Routes>
         <Route path="/" element={<Home />} />
+
         <Route path="/login" element={<Login />} />
+
         <Route path="/register" element={<Register />} />
+
         <Route path="/products" element={<Products />} />
+
         <Route path="/cart" element={<Cart />} />
+
         <Route path="/profile" element={<Profile />} />
+
+        <Route path="/payment" element={<Payment />} />
+
+        <Route
+          path="/payment-success"
+          element={<PaymentSuccess />}
+        />
       </Routes>
     </>
   );

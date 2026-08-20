@@ -1,66 +1,92 @@
-import { useEffect, useState } from "react";
-import api from "../services/api";
+import React, { useState } from "react";
 
-function Cart() {
-  const [cart, setCart] = useState(null);
-  const [loading, setLoading] = useState(true);
+const Cart = ({ cartItems = [] }) => {
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchCart();
-  }, []);
+  const handleCheckout = async () => {
+    if (cartItems.length === 0) {
+      alert("Your cart is empty");
+      return;
+    }
 
-  const fetchCart = async () => {
     try {
-      const response = await api.get("/cart");
-      setCart(response.data);
+      setLoading(true);
+
+      const response = await fetch(
+        "http://127.0.0.1:8000/payment/create-checkout-session",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            items: cartItems.map((item) => ({
+              product_id: item.id,
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+            })),
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Backend error:", data);
+        alert(data.detail || "Unable to start checkout");
+        return;
+      }
+
+      if (data.checkout_url) {
+        window.location.href = data.checkout_url;
+      } else {
+        alert("Checkout URL was not returned by the server");
+      }
     } catch (error) {
-      console.error(error);
+      console.error("Checkout error:", error);
+      alert("Unable to connect to payment server");
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) {
-    return <h2>Loading cart...</h2>;
-  }
-
-  if (!cart) {
-    return <h2>Your cart is empty</h2>;
-  }
+  const totalAmount = cartItems.reduce(
+    (total, item) => total + Number(item.price) * Number(item.quantity),
+    0
+  );
 
   return (
     <div>
       <h1>Shopping Cart</h1>
 
-      {cart.items?.map((item) => (
-        <div key={item.id}>
-          <h3>{item.product.name}</h3>
+      {cartItems.length === 0 ? (
+        <p>Your cart is empty.</p>
+      ) : (
+        <>
+          {cartItems.map((item) => (
+            <div key={item.id}>
+              <h3>{item.name}</h3>
+              <p>Price: ₹{item.price}</p>
+              <p>Quantity: {item.quantity}</p>
+              <p>
+                Subtotal: ₹
+                {Number(item.price) * Number(item.quantity)}
+              </p>
+            </div>
+          ))}
 
-          <p>
-            Price: ₹{item.product.price}
-          </p>
+          <hr />
 
-          <p>
-            Quantity: {item.quantity}
-          </p>
+          <h2>Total: ₹{totalAmount}</h2>
 
-          <p>
-            Item Total: ₹{item.item_total}
-          </p>
-        </div>
-      ))}
-
-      <hr />
-
-      <h2>
-        Cart Total: ₹{cart.cart_total}
-      </h2>
-
-      <h2>
-        Grand Total: ₹{cart.grand_total}
-      </h2>
+          <button onClick={handleCheckout} disabled={loading}>
+            {loading ? "Processing..." : "Checkout & Pay"}
+          </button>
+        </>
+      )}
     </div>
   );
-}
+};
 
 export default Cart;
