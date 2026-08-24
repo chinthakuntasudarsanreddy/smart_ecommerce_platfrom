@@ -12,6 +12,7 @@ import Profile from "./pages/Profile";
 import Payment from "./pages/Payment";
 import PaymentSuccess from "./pages/PaymentSuccess";
 
+import Notifications from "./pages/Notifications";
 function App() {
   return (
     <>
@@ -36,6 +37,10 @@ function App() {
           path="/payment-success"
           element={<PaymentSuccess />}
         />
+        <Route
+  path="/notifications"
+  element={<Notifications userId={1} />}
+/>
       </Routes>
     </>
   );

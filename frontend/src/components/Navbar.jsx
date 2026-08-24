@@ -23,6 +23,16 @@ function Navbar() {
         <Link to="/products">
           Products
         </Link>
+        <Link to="/notifications">
+            🔔 Notifications
+          </Link>
+
+        {/* Notifications */}
+        {isAuthenticated && (
+          <Link to="/notifications">
+            🔔 Notifications
+          </Link>
+        )}
 
         {/* Cart always visible */}
         <Link to="/cart">

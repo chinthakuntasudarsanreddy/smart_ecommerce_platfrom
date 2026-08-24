@@ -9,6 +9,14 @@ const Cart = ({ cartItems = [] }) => {
       return;
     }
 
+    // Get logged-in user's database ID
+    const userId = Number(localStorage.getItem("user_id"));
+
+    if (!userId) {
+      alert("User ID not found. Please login again.");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -16,15 +24,19 @@ const Cart = ({ cartItems = [] }) => {
         "http://127.0.0.1:8000/payment/create-checkout-session",
         {
           method: "POST",
+
           headers: {
             "Content-Type": "application/json",
           },
+
           body: JSON.stringify({
+            user_id: userId,
+
             items: cartItems.map((item) => ({
               product_id: item.id,
               name: item.name,
-              price: item.price,
-              quantity: item.quantity,
+              price: Number(item.price),
+              quantity: Number(item.quantity),
             })),
           }),
         }
@@ -34,57 +46,104 @@ const Cart = ({ cartItems = [] }) => {
 
       if (!response.ok) {
         console.error("Backend error:", data);
-        alert(data.detail || "Unable to start checkout");
+
+        alert(
+          data.detail ||
+          "Unable to start checkout"
+        );
+
         return;
       }
 
       if (data.checkout_url) {
         window.location.href = data.checkout_url;
       } else {
-        alert("Checkout URL was not returned by the server");
+        alert(
+          "Checkout URL was not returned by server"
+        );
       }
+
     } catch (error) {
-      console.error("Checkout error:", error);
-      alert("Unable to connect to payment server");
+      console.error(
+        "Checkout error:",
+        error
+      );
+
+      alert(
+        "Unable to connect to payment server"
+      );
+
     } finally {
       setLoading(false);
     }
   };
 
   const totalAmount = cartItems.reduce(
-    (total, item) => total + Number(item.price) * Number(item.quantity),
+    (total, item) =>
+      total +
+      Number(item.price) *
+      Number(item.quantity),
     0
   );
 
   return (
     <div>
+
       <h1>Shopping Cart</h1>
 
       {cartItems.length === 0 ? (
+
         <p>Your cart is empty.</p>
+
       ) : (
+
         <>
+
           {cartItems.map((item) => (
+
             <div key={item.id}>
+
               <h3>{item.name}</h3>
-              <p>Price: ₹{item.price}</p>
-              <p>Quantity: {item.quantity}</p>
+
+              <p>
+                Price: ₹{item.price}
+              </p>
+
+              <p>
+                Quantity: {item.quantity}
+              </p>
+
               <p>
                 Subtotal: ₹
-                {Number(item.price) * Number(item.quantity)}
+                {
+                  Number(item.price) *
+                  Number(item.quantity)
+                }
               </p>
+
+              <hr />
+
             </div>
+
           ))}
 
-          <hr />
+          <h2>
+            Total: ₹{totalAmount}
+          </h2>
 
-          <h2>Total: ₹{totalAmount}</h2>
-
-          <button onClick={handleCheckout} disabled={loading}>
-            {loading ? "Processing..." : "Checkout & Pay"}
+          <button
+            onClick={handleCheckout}
+            disabled={loading}
+          >
+            {loading
+              ? "Processing..."
+              : "Checkout & Pay"}
           </button>
+
         </>
+
       )}
+
     </div>
   );
 };

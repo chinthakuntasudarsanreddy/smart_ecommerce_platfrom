@@ -8,6 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.checkout import router as checkout_router
 from app.routes.payment import router as payment_router
 from app.api.stripe_webhook import router as stripe_webhook_router
+from app.routes.notifications import router as notification_router
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from app.routes.websocket import router as websocket_router
+from app.websocket.manager import manager
+
+
+
 app = FastAPI(
     title="Smart E-Commerce Platform",
     version="1.0.0",
@@ -31,13 +38,33 @@ app.include_router(cart_router)
 app.include_router(checkout_router)
 app.include_router(payment_router)
 app.include_router(stripe_webhook_router)
-
+app.include_router(notification_router)
+app.include_router(websocket_router)
 @app.get("/")
 def root():
     return {
         "message": "Smart E-Commerce Platform API",
         "status": "running"
     }
+@app.websocket("/ws/notifications/{user_id}")
+async def notification_websocket(
+    websocket: WebSocket,
+    user_id: int
+):
+
+    await manager.connect(user_id, websocket)
+
+    try:
+
+        while True:
+            await websocket.receive_text()
+
+    except WebSocketDisconnect:
+
+        manager.disconnect(
+            user_id,
+            websocket
+        )
 
 
 @app.get("/health")
@@ -45,3 +72,5 @@ def health():
     return {
         "status": "healthy"
     }
+
+
