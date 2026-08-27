@@ -3,7 +3,7 @@ from django.db import models
 
 class Product(models.Model):
 
-    id = models.IntegerField(
+    id = models.AutoField(
         primary_key=True
     )
 
@@ -12,8 +12,8 @@ class Product(models.Model):
     )
 
     description = models.TextField(
-        null=True,
-        blank=True
+        blank=True,
+        null=True
     )
 
     category = models.CharField(
@@ -33,21 +33,15 @@ class Product(models.Model):
         default=0
     )
 
-    image_url = models.CharField(
+    image_url = models.URLField(
         max_length=500,
-        null=True,
-        blank=True
+        blank=True,
+        null=True
     )
 
-    created_at = models.DateTimeField(
-        null=True,
-        blank=True
-    )
+    created_at = models.DateTimeField()
 
-    updated_at = models.DateTimeField(
-        null=True,
-        blank=True
-    )
+    updated_at = models.DateTimeField()
 
     class Meta:
 
@@ -55,7 +49,9 @@ class Product(models.Model):
 
         db_table = "products"
 
-        ordering = ["-created_at"]
+        ordering = [
+            "-created_at"
+        ]
 
     def __str__(self):
 

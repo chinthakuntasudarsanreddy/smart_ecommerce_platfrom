@@ -1,4 +1,8 @@
-import { Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import {
+  Routes,
+  Route
+} from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 
@@ -13,34 +17,102 @@ import Payment from "./pages/Payment";
 import PaymentSuccess from "./pages/PaymentSuccess";
 
 import Notifications from "./pages/Notifications";
+
+import {
+  connectNotificationSocket,
+  disconnectNotificationSocket
+} from "./services/notificationSocket";
+
+
 function App() {
+
+  useEffect(() => {
+
+    // Temporary testing user ID
+    const userId = 1;
+
+    const socket = connectNotificationSocket(
+      userId,
+      (notification) => {
+
+        console.log(
+          "New notification received:",
+          notification
+        );
+
+        // Browser notification
+        if (
+          "Notification" in window &&
+          Notification.permission === "granted"
+        ) {
+          new Notification(
+            notification.type,
+            {
+              body: notification.message
+            }
+          );
+        }
+      }
+    );
+
+    return () => {
+      disconnectNotificationSocket();
+    };
+
+  }, []);
+
+
   return (
     <>
       <Navbar />
 
       <Routes>
-        <Route path="/" element={<Home />} />
 
-        <Route path="/login" element={<Login />} />
+        <Route
+          path="/"
+          element={<Home />}
+        />
 
-        <Route path="/register" element={<Register />} />
+        <Route
+          path="/login"
+          element={<Login />}
+        />
 
-        <Route path="/products" element={<Products />} />
+        <Route
+          path="/register"
+          element={<Register />}
+        />
 
-        <Route path="/cart" element={<Cart />} />
+        <Route
+          path="/products"
+          element={<Products />}
+        />
 
-        <Route path="/profile" element={<Profile />} />
+        <Route
+          path="/cart"
+          element={<Cart />}
+        />
 
-        <Route path="/payment" element={<Payment />} />
+        <Route
+          path="/profile"
+          element={<Profile />}
+        />
+
+        <Route
+          path="/payment"
+          element={<Payment />}
+        />
 
         <Route
           path="/payment-success"
           element={<PaymentSuccess />}
         />
+
         <Route
-  path="/notifications"
-  element={<Notifications userId={1} />}
-/>
+          path="/notifications"
+          element={<Notifications userId={1} />}
+        />
+
       </Routes>
     </>
   );

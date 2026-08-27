@@ -1,0 +1,839 @@
+```html
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Ecommerce Admin Dashboard</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            color: #222;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: auto;
+            padding: 30px;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        /* =========================
+           SUMMARY CARDS
+        ========================= */
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .card h3 {
+            margin: 0 0 10px;
+            color: #666;
+            font-size: 15px;
+        }
+
+        .number {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        /* =========================
+           CONTENT GRID
+        ========================= */
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .box {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+        }
+
+        /* =========================
+           TABLE
+        ========================= */
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f8f8;
+        }
+
+        /* =========================
+           STATUS
+        ========================= */
+
+        .status {
+            padding: 5px 9px;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .paid {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .failed,
+        .cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .shipped {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .delivered {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        /* =========================
+           LOW STOCK
+        ========================= */
+
+        .low-stock {
+            font-weight: bold;
+        }
+
+        .empty {
+            color: #777;
+            padding: 20px 0;
+        }
+
+        /* =========================
+           BUTTONS
+        ========================= */
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 11px 16px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .button:hover {
+            opacity: 0.85;
+        }
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
+        @media (max-width: 1100px) {
+
+            .cards {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+        }
+
+        @media (max-width: 800px) {
+
+            .cards,
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <!-- =========================
+         HEADER
+    ========================= -->
+
+    <h1>
+        📊 Ecommerce Admin Dashboard
+    </h1>
+
+
+    <!-- =========================
+         SUMMARY CARDS
+    ========================= -->
+
+    <div class="cards">
+
+        <div class="card">
+
+            <h3>🧾 Total Orders</h3>
+
+            <div class="number">
+                {{ total_orders }}
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>✅ Paid Orders</h3>
+
+            <div class="number">
+                {{ paid_orders }}
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>⏳ Pending Orders</h3>
+
+            <div class="number">
+                {{ pending_orders }}
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>❌ Cancelled</h3>
+
+            <div class="number">
+                {{ cancelled_orders }}
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>💰 Revenue</h3>
+
+            <div class="number">
+                ₹{{ total_revenue|floatformat:2 }}
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>📈 Total Sales</h3>
+
+            <div class="number">
+                {{ total_sales }}
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         CHARTS
+    ========================= -->
+
+    <div class="grid">
+
+
+        <!-- REVENUE -->
+
+        <div class="box">
+
+            <h2>
+                📈 Revenue Trend
+            </h2>
+
+            <div class="chart-container">
+
+                <canvas id="revenueChart"></canvas>
+
+            </div>
+
+        </div>
+
+
+        <!-- TOP PRODUCTS -->
+
+        <div class="box">
+
+            <h2>
+                🏆 Top-Selling Products
+            </h2>
+
+            {% if top_products %}
+
+                <div class="chart-container">
+
+                    <canvas id="topProductsChart"></canvas>
+
+                </div>
+
+            {% else %}
+
+                <p class="empty">
+                    No product sales data available.
+                </p>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         RECENT ORDERS
+    ========================= -->
+
+    <div class="box">
+
+        <h2>
+            🧾 Recent Orders
+        </h2>
+
+
+        {% if recent_orders %}
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Order ID</th>
+                            <th>User ID</th>
+                            <th>Total</th>
+                            <th>Payment</th>
+                            <th>Order Status</th>
+                            <th>Date</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for order in recent_orders %}
+
+                            <tr>
+
+                                <td>
+                                    #{{ order.id }}
+                                </td>
+
+                                <td>
+                                    {{ order.user_id }}
+                                </td>
+
+                                <td>
+                                    ₹{{ order.total|floatformat:2 }}
+                                </td>
+
+                                <td>
+
+                                    <span class="status {{ order.payment_status }}">
+
+                                        {{ order.payment_status|title }}
+
+                                    </span>
+
+                                </td>
+
+                                <td>
+
+                                    <span class="status {{ order.order_status }}">
+
+                                        {{ order.order_status|title }}
+
+                                    </span>
+
+                                </td>
+
+                                <td>
+                                    {{ order.created_at }}
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        {% else %}
+
+            <p class="empty">
+                No orders available.
+            </p>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- =========================
+         LOW STOCK
+    ========================= -->
+
+    <div class="box">
+
+        <h2>
+            ⚠️ Low Stock Products
+        </h2>
+
+
+        {% if low_stock_products %}
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Product ID</th>
+                            <th>Product</th>
+                            <th>Stock</th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for product in low_stock_products %}
+
+                            <tr>
+
+                                <td>
+                                    {{ product.id }}
+                                </td>
+
+                                <td>
+                                    {{ product.name }}
+                                </td>
+
+                                <td class="low-stock">
+                                    {{ product.stock }}
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        {% else %}
+
+            <p class="empty">
+                ✅ No low-stock products.
+            </p>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- =========================
+         MANAGEMENT
+    ========================= -->
+
+    <div class="box">
+
+        <h2>
+            ⚙️ Management
+        </h2>
+
+        <div class="buttons">
+
+            <a
+                href="/admin/orders/order/"
+                class="button">
+                🧾 Manage Orders
+            </a>
+
+
+            <a
+                href="/admin/dashboard/product/"
+                class="button">
+                📦 Manage Products
+            </a>
+
+
+            <a
+                href="/admin/users/user/"
+                class="button">
+                👥 Manage Users
+            </a>
+
+
+            <a
+                href="/admin/"
+                class="button">
+                ⚙️ Django Admin
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         REPORTS
+    ========================= -->
+
+    <div class="box">
+
+        <h2>
+            📥 Export Reports
+        </h2>
+
+        <div class="buttons">
+
+            <a
+                href="{% url 'orders_csv' %}"
+                class="button">
+                📥 Orders CSV
+            </a>
+
+
+            <a
+                href="{% url 'orders_pdf' %}"
+                class="button">
+                📄 Orders PDF
+            </a>
+
+
+            <a
+                href="{% url 'sales_csv' %}"
+                class="button">
+                📥 Sales CSV
+            </a>
+
+
+            <a
+                href="{% url 'sales_pdf' %}"
+                class="button">
+                📄 Sales PDF
+            </a>
+
+
+            <a
+                href="{% url 'users_csv' %}"
+                class="button">
+                📥 Users CSV
+            </a>
+
+
+            <a
+                href="{% url 'users_pdf' %}"
+                class="button">
+                📄 Users PDF
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================
+     DJANGO JSON DATA
+========================= -->
+
+{{ revenue_labels|json_script:"revenue-labels-data" }}
+
+{{ revenue_values|json_script:"revenue-values-data" }}
+
+{{ top_products|json_script:"top-products-data" }}
+
+
+<script>
+
+    /* =========================
+       REVENUE DATA
+    ========================= */
+
+    const revenueLabels =
+        JSON.parse(
+            document.getElementById(
+                "revenue-labels-data"
+            ).textContent
+        );
+
+
+    const revenueValues =
+        JSON.parse(
+            document.getElementById(
+                "revenue-values-data"
+            ).textContent
+        );
+
+
+    /* =========================
+       REVENUE CHART
+    ========================= */
+
+    const revenueCanvas =
+        document.getElementById(
+            "revenueChart"
+        );
+
+
+    if (revenueCanvas) {
+
+        new Chart(
+            revenueCanvas,
+            {
+
+                type: "line",
+
+                data: {
+
+                    labels: revenueLabels,
+
+                    datasets: [
+
+                        {
+
+                            label: "Revenue",
+
+                            data: revenueValues,
+
+                            borderWidth: 2,
+
+                            tension: 0.3,
+
+                            fill: false
+
+                        }
+
+                    ]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    scales: {
+
+                        y: {
+
+                            beginAtZero: true
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        );
+
+    }
+
+
+    /* =========================
+       TOP PRODUCTS
+    ========================= */
+
+    const topProductsElement =
+        document.getElementById(
+            "top-products-data"
+        );
+
+
+    if (topProductsElement) {
+
+        const topProducts =
+            JSON.parse(
+                topProductsElement.textContent
+            );
+
+
+        if (topProducts.length > 0) {
+
+            const labels =
+                topProducts.map(
+                    product => product.name
+                );
+
+
+            const values =
+                topProducts.map(
+                    product => product.quantity
+                );
+
+
+            const canvas =
+                document.getElementById(
+                    "topProductsChart"
+                );
+
+
+            if (canvas) {
+
+                new Chart(
+                    canvas,
+                    {
+
+                        type: "bar",
+
+                        data: {
+
+                            labels: labels,
+
+                            datasets: [
+
+                                {
+
+                                    label: "Quantity Sold",
+
+                                    data: values,
+
+                                    borderWidth: 1
+
+                                }
+
+                            ]
+
+                        },
+
+                        options: {
+
+                            responsive: true,
+
+                            maintainAspectRatio: false,
+
+                            scales: {
+
+                                y: {
+
+                                    beginAtZero: true,
+
+                                    ticks: {
+
+                                        precision: 0
+
+                                    }
+
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                );
+
+            }
+
+        }
+
+    }
+
+</script>
+
+</body>
+
+</html>
+```

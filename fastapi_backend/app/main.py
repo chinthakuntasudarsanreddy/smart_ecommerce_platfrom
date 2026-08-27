@@ -13,6 +13,8 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from app.routes.websocket import router as websocket_router
 from app.websocket.manager import manager
 
+from app.routes.user import router as user_router
+
 
 
 app = FastAPI(
@@ -40,6 +42,7 @@ app.include_router(payment_router)
 app.include_router(stripe_webhook_router)
 app.include_router(notification_router)
 app.include_router(websocket_router)
+app.include_router(user_router)
 @app.get("/")
 def root():
     return {

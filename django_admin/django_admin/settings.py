@@ -24,20 +24,18 @@ ALLOWED_HOSTS = []
 # --------------------------------------------------
 
 INSTALLED_APPS = [
-
     "django.contrib.admin",
-
     "django.contrib.auth",
-
     "django.contrib.contenttypes",
-
     "django.contrib.sessions",
-
     "django.contrib.messages",
-
     "django.contrib.staticfiles",
 
-    "dashboard",
+     'users',
+    'products',
+    'orders',
+    'dashboard',
+    
 ]
 
 
@@ -111,18 +109,16 @@ ASGI_APPLICATION = "django_admin.asgi.application"
 # --------------------------------------------------
 # DATABASE
 # --------------------------------------------------
-
 DATABASES = {
-
     "default": {
-
-        "ENGINE": "django.db.backends.sqlite3",
-
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "fastapi",
+        "USER": "root",
+        "PASSWORD": "root",
+        "HOST": "localhost",
+        "PORT": "3306",
     }
 }
-
-
 # --------------------------------------------------
 # PASSWORD VALIDATION
 # --------------------------------------------------
@@ -176,3 +172,8 @@ STATIC_URL = "static/"
 # --------------------------------------------------
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+MEDIA_URL = "/media/"
+
+MEDIA_ROOT = BASE_DIR / "media"
