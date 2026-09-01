@@ -15,14 +15,12 @@ import Profile from "./pages/Profile";
 
 import Payment from "./pages/Payment";
 import PaymentSuccess from "./pages/PaymentSuccess";
-
 import Notifications from "./pages/Notifications";
-
 import {
   connectNotificationSocket,
   disconnectNotificationSocket
 } from "./services/notificationSocket";
-
+import Orders from "./pages/Orders";
 
 function App() {
 
@@ -112,6 +110,10 @@ function App() {
           path="/notifications"
           element={<Notifications userId={1} />}
         />
+        <Route
+    path="/orders"
+    element={<Orders />}
+/>
 
       </Routes>
     </>

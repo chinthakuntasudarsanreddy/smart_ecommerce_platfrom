@@ -17,12 +17,14 @@ class ProductCreate(BaseModel):
 class ProductResponse(BaseModel):
     id: int
     name: str
-    description: str | None
+    description: str | None = None
     category: str
     price: Decimal
     stock: int
     popularity: int
-    image_url: str | None
-    created_at: datetime
+    image_url: str | None = None
+
+    # FIX: database can currently contain NULL
+    created_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)

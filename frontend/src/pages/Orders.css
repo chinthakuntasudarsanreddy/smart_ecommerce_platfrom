@@ -1,0 +1,289 @@
+.orders-page {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+.orders-page h1 {
+    margin-bottom: 25px;
+}
+
+.orders-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.refresh-btn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.order-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.order-header h2 {
+    margin: 0;
+}
+
+.order-header p {
+    color: #777;
+}
+
+.status {
+    padding: 7px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.delivered {
+    background: #d4edda;
+    color: #155724;
+}
+
+.paid {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.shipped {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.cancelled {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.return-requested {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.return-approved {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.return-picked-up {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.return-received {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+.refunded {
+    background: #d4edda;
+    color: #155724;
+}
+
+.order-details {
+    margin-top: 15px;
+}
+
+.order-actions {
+    margin-top: 20px;
+}
+
+.return-btn {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    background: #dc3545;
+    color: white;
+}
+
+.return-btn:hover {
+    opacity: 0.9;
+}
+
+.return-disabled {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    background: #eee;
+    color: #777;
+}
+
+.return-message {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 6px;
+    background: #f5f5f5;
+}
+
+
+/* =========================================
+   RETURN MODAL
+========================================= */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    z-index: 9999;
+}
+
+.return-modal {
+    width: 450px;
+    max-width: 90%;
+
+    background: white;
+    border-radius: 12px;
+
+    padding: 25px;
+
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 20px;
+}
+
+.modal-header h2 {
+    margin: 0;
+}
+
+.close-btn {
+    border: none;
+    background: transparent;
+
+    font-size: 28px;
+
+    cursor: pointer;
+}
+
+.selected-order {
+    padding: 12px;
+    background: #f5f5f5;
+
+    border-radius: 6px;
+
+    margin-bottom: 20px;
+}
+
+.selected-order p {
+    margin-bottom: 0;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-group label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    font-weight: 600;
+}
+
+.form-group select,
+.form-group textarea {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 10px;
+
+    border: 1px solid #ccc;
+
+    border-radius: 6px;
+
+    font-size: 14px;
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
+.modal-actions {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    margin-top: 20px;
+}
+
+.cancel-btn {
+    padding: 10px 18px;
+
+    border: 1px solid #ccc;
+
+    background: white;
+
+    border-radius: 6px;
+
+    cursor: pointer;
+}
+
+.submit-return-btn {
+    padding: 10px 18px;
+
+    border: none;
+
+    background: #dc3545;
+
+    color: white;
+
+    border-radius: 6px;
+
+    cursor: pointer;
+
+    font-weight: 600;
+}
+
+.submit-return-btn:disabled,
+.cancel-btn:disabled,
+.return-btn:disabled {
+    opacity: 0.6;
+
+    cursor: not-allowed;
+}
+
+.error {
+    color: red;
+}
+
+.no-orders {
+    text-align: center;
+
+    padding: 50px;
+}

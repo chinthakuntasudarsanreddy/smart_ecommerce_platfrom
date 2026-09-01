@@ -1,3 +1,4 @@
+
 from sqlalchemy import (
     Column,
     Integer,
@@ -16,7 +17,19 @@ from app.core.database import Base
 class Notification(Base):
     __tablename__ = "notifications"
 
-    id = Column(Integer, primary_key=True, index=True)
+    # ============================================================
+    # PRIMARY KEY
+    # ============================================================
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+
+    # ============================================================
+    # USER ID
+    # ============================================================
 
     user_id = Column(
         Integer,
@@ -25,6 +38,10 @@ class Notification(Base):
         index=True
     )
 
+    # ============================================================
+    # ORDER ID
+    # ============================================================
+
     order_id = Column(
         Integer,
         ForeignKey("orders.id"),
@@ -32,15 +49,27 @@ class Notification(Base):
         index=True
     )
 
+    # ============================================================
+    # NOTIFICATION TYPE
+    # ============================================================
+
     type = Column(
         String(100),
         nullable=False
     )
 
+    # ============================================================
+    # MESSAGE
+    # ============================================================
+
     message = Column(
         Text,
         nullable=False
     )
+
+    # ============================================================
+    # READ STATUS
+    # ============================================================
 
     read_status = Column(
         Boolean,
@@ -48,11 +77,28 @@ class Notification(Base):
         nullable=False
     )
 
+    # ============================================================
+    # TIMESTAMP
+    # ============================================================
+
     timestamp = Column(
         DateTime,
         server_default=func.now(),
         nullable=False
     )
+
+    # ============================================================
+    # RELATIONSHIP WITH USER
+    # ============================================================
+
+    user = relationship(
+        "User",
+        back_populates="notifications"
+    )
+
+    # ============================================================
+    # RELATIONSHIP WITH ORDER
+    # ============================================================
 
     order = relationship(
         "Order",
