@@ -11,7 +11,6 @@ from app.schemas.return_request import (
     ReturnRequestResponse,
 )
 
-# Change this import if your project uses a different auth dependency
 from app.api.auth import get_current_user
 
 
@@ -35,7 +34,11 @@ def request_return(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
-    # 1. Find order
+
+    # ============================================================
+    # 1. FIND ORDER
+    # ============================================================
+
     order = (
         db.query(Order)
         .filter(
@@ -51,36 +54,25 @@ def request_return(
             detail="Order not found"
         )
 
-    # 2. Check order status
-    if order.status.lower() != "delivered":
+    # ============================================================
+    # 2. CHECK ORDER STATUS
+    # ============================================================
+
+    if order.order_status.lower() != "delivered":
         raise HTTPException(
             status_code=400,
             detail="Return can only be requested for delivered orders"
         )
 
-    # 3. Check delivery date
-    delivered_at = getattr(order, "delivered_at", None)
+    # ============================================================
+    # 3. CHECK EXISTING RETURN REQUEST
+    # ============================================================
 
-    if not delivered_at:
-        raise HTTPException(
-            status_code=400,
-            detail="Delivery date is not available for this order"
-        )
-
-    return_deadline = delivered_at + timedelta(
-        days=RETURN_WINDOW_DAYS
-    )
-
-    if datetime.utcnow() > return_deadline:
-        raise HTTPException(
-            status_code=400,
-            detail="Return window has expired"
-        )
-
-    # 4. Check existing return request
     existing_request = (
         db.query(ReturnRequest)
-        .filter(ReturnRequest.order_id == order.id)
+        .filter(
+            ReturnRequest.order_id == order.id
+        )
         .first()
     )
 
@@ -90,19 +82,46 @@ def request_return(
             detail="Return request already exists for this order"
         )
 
-    # 5. Create return request
+    # ============================================================
+    # 4. CHECK RETURN WINDOW
+    # ============================================================
+    #
+    # Your current Order model does not have delivered_at.
+    # Therefore we use created_at as a temporary basis.
+    #
+    # Later we can add delivered_at properly.
+    #
+
+    if order.created_at:
+        return_deadline = (
+            order.created_at.replace(tzinfo=None)
+            + timedelta(days=RETURN_WINDOW_DAYS)
+        )
+
+        if datetime.utcnow() > return_deadline:
+            raise HTTPException(
+                status_code=400,
+                detail="Return window has expired"
+            )
+
+    # ============================================================
+    # 5. CREATE RETURN REQUEST
+    # ============================================================
+
     return_request = ReturnRequest(
         order_id=order.id,
         user_id=current_user.id,
         reason=request.reason,
-        comment=request.comment,
         status="pending"
     )
 
     db.add(return_request)
 
-    # 6. Update order status
-    order.status = "Return Requested"
+    # ============================================================
+    # 6. UPDATE ORDER STATUS
+    # ============================================================
+
+    order.order_status = "return_requested"
 
     db.commit()
     db.refresh(return_request)

@@ -106,7 +106,7 @@ class User(Base):
 
     orders = relationship(
         "Order",
-        back_populates="user"
+        back_populates="user",
     )
 
     # ============================================================

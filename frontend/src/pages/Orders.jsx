@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth0 } from "@auth0/auth0-react";
@@ -57,8 +56,6 @@ const Order = () => {
 
       const token = await getToken();
 
-      console.log("Calling orders API...");
-
       const response = await axios.get(
         `${API_URL}/orders/`,
         {
@@ -87,6 +84,7 @@ const Order = () => {
       } else {
         setError(
           err.response?.data?.detail ||
+            err.response?.data?.message ||
             err.message ||
             "Unable to load orders."
         );
@@ -184,6 +182,7 @@ const Order = () => {
 
       closeReturnForm();
 
+      // Reload orders so the latest backend status appears
       await fetchOrders();
     } catch (err) {
       console.error(
@@ -208,7 +207,11 @@ const Order = () => {
   // ============================================================
 
   const getStatusText = (status) => {
-    switch (status) {
+    const normalizedStatus = String(
+      status || ""
+    ).toLowerCase();
+
+    switch (normalizedStatus) {
       case "pending":
         return "Pending";
 
@@ -221,23 +224,20 @@ const Order = () => {
       case "delivered":
         return "Delivered";
 
-      case "cancelled":
-        return "Cancelled";
-
       case "return_requested":
         return "Return Requested";
 
-      case "return_approved":
-        return "Return Approved";
+      case "returned":
+        return "Returned";
 
-      case "return_picked_up":
-        return "Return Picked Up";
-
-      case "return_received":
-        return "Return Received";
+      case "rejected":
+        return "Rejected";
 
       case "refunded":
         return "Refunded";
+
+      case "cancelled":
+        return "Cancelled";
 
       default:
         return status || "Unknown";
@@ -249,9 +249,13 @@ const Order = () => {
   // ============================================================
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case "delivered":
-        return "#198754";
+    const normalizedStatus = String(
+      status || ""
+    ).toLowerCase();
+
+    switch (normalizedStatus) {
+      case "pending":
+        return "#6c757d";
 
       case "paid":
         return "#0d6efd";
@@ -259,23 +263,23 @@ const Order = () => {
       case "shipped":
         return "#6f42c1";
 
-      case "cancelled":
-        return "#dc3545";
+      case "delivered":
+        return "#198754";
 
       case "return_requested":
         return "#fd7e14";
 
-      case "return_approved":
+      case "returned":
         return "#20c997";
 
-      case "return_picked_up":
-        return "#6610f2";
-
-      case "return_received":
-        return "#0dcaf0";
+      case "rejected":
+        return "#dc3545";
 
       case "refunded":
         return "#198754";
+
+      case "cancelled":
+        return "#dc3545";
 
       default:
         return "#6c757d";
@@ -457,8 +461,21 @@ const Order = () => {
       ) : (
         <div>
           {orders.map((order) => {
-            const orderStatus =
-              order.order_status?.toLowerCase();
+            // ==================================================
+            // BACKEND ORDER STATUS
+            // ==================================================
+
+            const orderStatus = String(
+              order.order_status || ""
+            ).toLowerCase();
+
+            const paymentStatus = String(
+              order.payment_status || ""
+            ).toLowerCase();
+
+            // ==================================================
+            // STATUS FLAGS
+            // ==================================================
 
             const isDelivered =
               orderStatus === "delivered";
@@ -466,23 +483,24 @@ const Order = () => {
             const isReturnRequested =
               orderStatus === "return_requested";
 
-            const isReturnApproved =
-              orderStatus === "return_approved";
+            const isReturned =
+              orderStatus === "returned";
 
-            const isReturnPickedUp =
-              orderStatus === "return_picked_up";
-
-            const isReturnReceived =
-              orderStatus === "return_received";
+            const isRejected =
+              orderStatus === "rejected";
 
             const isRefunded =
-              orderStatus === "refunded";
+              orderStatus === "refunded" ||
+              paymentStatus === "refunded";
+
+            // ==================================================
+            // RETURN ALREADY STARTED
+            // ==================================================
 
             const returnAlreadyStarted =
               isReturnRequested ||
-              isReturnApproved ||
-              isReturnPickedUp ||
-              isReturnReceived ||
+              isReturned ||
+              isRejected ||
               isRefunded;
 
             return (
@@ -498,13 +516,14 @@ const Order = () => {
                     "0 2px 8px rgba(0,0,0,0.08)",
                 }}
               >
-                {/* ORDER HEADER */}
+                {/* ============================================
+                    ORDER HEADER
+                ============================================ */}
 
                 <div
                   style={{
                     display: "flex",
-                    justifyContent:
-                      "space-between",
+                    justifyContent: "space-between",
                     alignItems: "center",
                     flexWrap: "wrap",
                     gap: "10px",
@@ -543,7 +562,9 @@ const Order = () => {
                   </span>
                 </div>
 
-                {/* ORDER DETAILS */}
+                {/* ============================================
+                    ORDER DETAILS
+                ============================================ */}
 
                 <div
                   style={{
@@ -561,8 +582,9 @@ const Order = () => {
                     <strong>
                       Payment Status:
                     </strong>{" "}
-                    {order.payment_status ||
-                      "Unknown"}
+                    {getStatusText(
+                      paymentStatus
+                    )}
                   </p>
 
                   <p>
@@ -575,7 +597,9 @@ const Order = () => {
                   </p>
                 </div>
 
-                {/* RETURN STATUS */}
+                {/* ============================================
+                    RETURN REQUESTED
+                ============================================ */}
 
                 {isReturnRequested && (
                   <div
@@ -586,6 +610,7 @@ const Order = () => {
                       background: "#fff3cd",
                       border:
                         "1px solid #ffecb5",
+                      color: "#664d03",
                     }}
                   >
                     <strong>
@@ -594,12 +619,16 @@ const Order = () => {
 
                     <p>
                       Your return request is
-                      waiting for approval.
+                      waiting for admin approval.
                     </p>
                   </div>
                 )}
 
-                {isReturnApproved && (
+                {/* ============================================
+                    RETURNED
+                ============================================ */}
+
+                {isReturned && !isRefunded && (
                   <div
                     style={{
                       marginTop: "15px",
@@ -608,62 +637,60 @@ const Order = () => {
                       background: "#d1e7dd",
                       border:
                         "1px solid #badbcc",
+                      color: "#0f5132",
                     }}
                   >
                     <strong>
-                      Return Approved
+                      Return Completed
                     </strong>
 
                     <p>
-                      Your return request
-                      has been approved.
+                      Your return has been
+                      approved and the product
+                      has been marked as returned.
                     </p>
                   </div>
                 )}
 
-                {isReturnPickedUp && (
+                {/* ============================================
+                    REJECTED
+                ============================================ */}
+
+                {isRejected && (
                   <div
                     style={{
                       marginTop: "15px",
                       padding: "15px",
                       borderRadius: "8px",
-                      background: "#e2d9f3",
+                      background: "#f8d7da",
                       border:
-                        "1px solid #d0bfff",
+                        "1px solid #f5c2c7",
+                      color: "#842029",
                     }}
                   >
                     <strong>
-                      Return Picked Up
+                      Return Rejected
                     </strong>
 
                     <p>
-                      Your returned product
-                      has been picked up.
+                      Your return request was
+                      rejected by the admin.
                     </p>
+
+                    {order.rejection_reason && (
+                      <p>
+                        <strong>
+                          Reason:
+                        </strong>{" "}
+                        {order.rejection_reason}
+                      </p>
+                    )}
                   </div>
                 )}
 
-                {isReturnReceived && (
-                  <div
-                    style={{
-                      marginTop: "15px",
-                      padding: "15px",
-                      borderRadius: "8px",
-                      background: "#cff4fc",
-                      border:
-                        "1px solid #b6effb",
-                    }}
-                  >
-                    <strong>
-                      Return Received
-                    </strong>
-
-                    <p>
-                      Your returned product
-                      has been received.
-                    </p>
-                  </div>
-                )}
+                {/* ============================================
+                    REFUNDED
+                ============================================ */}
 
                 {isRefunded && (
                   <div
@@ -674,26 +701,31 @@ const Order = () => {
                       background: "#d1e7dd",
                       border:
                         "1px solid #badbcc",
+                      color: "#0f5132",
                     }}
                   >
                     <strong>
-                      Refund Processed
+                      Refund Completed
                     </strong>
 
                     <p>
                       Your refund has been
-                      processed successfully.
+                      successfully processed.
                     </p>
                   </div>
                 )}
 
-                {/* ACTION */}
+                {/* ============================================
+                    ACTION BUTTONS
+                ============================================ */}
 
                 <div
                   style={{
                     marginTop: "20px",
                   }}
                 >
+                  {/* REQUEST RETURN */}
+
                   {isDelivered &&
                     !returnAlreadyStarted && (
                       <button
@@ -716,6 +748,8 @@ const Order = () => {
                       </button>
                     )}
 
+                  {/* RETURN REQUESTED */}
+
                   {isReturnRequested && (
                     <button
                       disabled
@@ -723,7 +757,7 @@ const Order = () => {
                         padding:
                           "11px 20px",
                         background:
-                          "#6c757d",
+                          "#fd7e14",
                         color: "#fff",
                         border: "none",
                         borderRadius: "6px",
@@ -733,56 +767,46 @@ const Order = () => {
                     </button>
                   )}
 
-                  {isReturnApproved && (
+                  {/* RETURNED */}
+
+                  {isReturned &&
+                    !isRefunded && (
+                      <button
+                        disabled
+                        style={{
+                          padding:
+                            "11px 20px",
+                          background:
+                            "#20c997",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: "6px",
+                        }}
+                      >
+                        Returned
+                      </button>
+                    )}
+
+                  {/* REJECTED */}
+
+                  {isRejected && (
                     <button
                       disabled
                       style={{
                         padding:
                           "11px 20px",
                         background:
-                          "#20c997",
+                          "#dc3545",
                         color: "#fff",
                         border: "none",
                         borderRadius: "6px",
                       }}
                     >
-                      Return Approved
+                      Return Rejected
                     </button>
                   )}
 
-                  {isReturnPickedUp && (
-                    <button
-                      disabled
-                      style={{
-                        padding:
-                          "11px 20px",
-                        background:
-                          "#6610f2",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "6px",
-                      }}
-                    >
-                      Return Picked Up
-                    </button>
-                  )}
-
-                  {isReturnReceived && (
-                    <button
-                      disabled
-                      style={{
-                        padding:
-                          "11px 20px",
-                        background:
-                          "#0dcaf0",
-                        color: "#000",
-                        border: "none",
-                        borderRadius: "6px",
-                      }}
-                    >
-                      Return Received
-                    </button>
-                  )}
+                  {/* REFUNDED */}
 
                   {isRefunded && (
                     <button
@@ -802,7 +826,9 @@ const Order = () => {
                   )}
                 </div>
 
-                {/* RETURN FORM */}
+                {/* ============================================
+                    RETURN FORM
+                ============================================ */}
 
                 {selectedOrder?.id ===
                   order.id && (
@@ -825,6 +851,8 @@ const Order = () => {
                       <strong>Order:</strong>{" "}
                       #{order.id}
                     </p>
+
+                    {/* RETURN REASON */}
 
                     <div
                       style={{
@@ -897,6 +925,8 @@ const Order = () => {
                       </select>
                     </div>
 
+                    {/* COMMENT */}
+
                     <div
                       style={{
                         marginBottom: "15px",
@@ -934,6 +964,8 @@ const Order = () => {
                         }}
                       />
                     </div>
+
+                    {/* FORM BUTTONS */}
 
                     <div>
                       <button
@@ -986,7 +1018,8 @@ const Order = () => {
                             "1px solid #ccc",
                           borderRadius:
                             "6px",
-                          cursor: "pointer",
+                          cursor:
+                            "pointer",
                         }}
                       >
                         Cancel

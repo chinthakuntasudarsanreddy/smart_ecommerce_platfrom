@@ -1,3 +1,4 @@
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -5,7 +6,7 @@ from typing import List
 
 from app.core.database import get_db
 from app.models.notification import Notification
-from app.models.user import User
+from app.services.notification_service import create_notification
 
 
 router = APIRouter(
@@ -14,9 +15,9 @@ router = APIRouter(
 )
 
 
-# ---------------------------------------------------------
-# Response schema
-# ---------------------------------------------------------
+# ============================================================
+# RESPONSE SCHEMA
+# ============================================================
 
 class NotificationResponse(BaseModel):
     id: int
@@ -31,40 +32,48 @@ class NotificationResponse(BaseModel):
         from_attributes = True
 
 
-# ---------------------------------------------------------
-# Mark notification as read request
-# ---------------------------------------------------------
+# ============================================================
+# MARK AS READ REQUEST
+# ============================================================
 
 class MarkNotificationReadRequest(BaseModel):
     notification_id: int
 
 
-# ---------------------------------------------------------
-# GET /notifications
-# Get all notifications for a user
-# ---------------------------------------------------------
+# ============================================================
+# GET ALL NOTIFICATIONS
+# ============================================================
 
-@router.get("/", response_model=List[NotificationResponse])
+@router.get(
+    "/",
+    response_model=List[NotificationResponse]
+)
 def get_notifications(
     user_id: int,
     db: Session = Depends(get_db)
 ):
     notifications = (
         db.query(Notification)
-        .filter(Notification.user_id == user_id)
-        .order_by(Notification.timestamp.desc())
+        .filter(
+            Notification.user_id == user_id
+        )
+        .order_by(
+            Notification.timestamp.desc()
+        )
         .all()
     )
 
     return notifications
 
 
-# ---------------------------------------------------------
-# GET /notifications/unread
-# Get unread notifications
-# ---------------------------------------------------------
+# ============================================================
+# GET UNREAD NOTIFICATIONS
+# ============================================================
 
-@router.get("/unread", response_model=List[NotificationResponse])
+@router.get(
+    "/unread",
+    response_model=List[NotificationResponse]
+)
 def get_unread_notifications(
     user_id: int,
     db: Session = Depends(get_db)
@@ -75,17 +84,18 @@ def get_unread_notifications(
             Notification.user_id == user_id,
             Notification.read_status == False
         )
-        .order_by(Notification.timestamp.desc())
+        .order_by(
+            Notification.timestamp.desc()
+        )
         .all()
     )
 
     return notifications
 
 
-# ---------------------------------------------------------
-# POST /notifications/read
-# Mark one notification as read
-# ---------------------------------------------------------
+# ============================================================
+# MARK ONE NOTIFICATION AS READ
+# ============================================================
 
 @router.post("/read")
 def mark_notification_as_read(
@@ -120,10 +130,9 @@ def mark_notification_as_read(
     }
 
 
-# ---------------------------------------------------------
-# POST /notifications/read-all
-# Mark all notifications as read
-# ---------------------------------------------------------
+# ============================================================
+# MARK ALL NOTIFICATIONS AS READ
+# ============================================================
 
 @router.post("/read-all")
 def mark_all_notifications_as_read(
@@ -150,4 +159,35 @@ def mark_all_notifications_as_read(
         "success": True,
         "message": "All notifications marked as read",
         "updated_count": updated
+    }
+
+
+# ============================================================
+# TEST REAL-TIME NOTIFICATION
+# ============================================================
+
+@router.post("/test")
+async def test_notification(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Test endpoint for WebSocket notifications.
+
+    Creates a notification in MySQL and immediately
+    sends it to the connected user.
+    """
+
+    notification = await create_notification(
+        db=db,
+        user_id=user_id,
+        notification_type="test",
+        message="Real-time notification is working!",
+        order_id=None,
+    )
+
+    return {
+        "success": True,
+        "message": "Test notification sent",
+        "notification_id": notification.id
     }

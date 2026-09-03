@@ -1,3 +1,4 @@
+
 import os
 import stripe
 
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
 from app.models.order import Order
+from app.services.notification_service import create_notification
 
 router = APIRouter(
     prefix="/stripe",
@@ -43,6 +45,7 @@ async def stripe_webhook(request: Request):
             detail="Invalid Stripe signature"
         )
 
+    # Stripe checkout completed
     if event["type"] == "checkout.session.completed":
 
         session = event["data"]["object"]
@@ -54,15 +57,31 @@ async def stripe_webhook(request: Request):
             db: Session = SessionLocal()
 
             try:
-                order = db.query(Order).filter(
-                    Order.id == int(order_id)
-                ).first()
+                order = (
+                    db.query(Order)
+                    .filter(Order.id == int(order_id))
+                    .first()
+                )
 
                 if order:
 
+                    # Update payment status
                     order.payment_status = "paid"
 
                     db.commit()
+                    db.refresh(order)
+
+                    # Send real-time notification
+                    await create_notification(
+                        db=db,
+                        user_id=order.user_id,
+                        notification_type="order_confirmed",
+                        message=(
+                            f"Order #{order.id} has been confirmed "
+                            f"successfully."
+                        ),
+                        order_id=order.id,
+                    )
 
             finally:
                 db.close()

@@ -26,12 +26,22 @@ from app.schemas.auth import RefreshRequest
 from app.schemas.auth import TokenResponse
 from app.schemas.auth import UserResponse
 
+from app.api.deps import get_current_user
+
+
+# ============================================================
+# AUTH ROUTER
+# ============================================================
 
 router = APIRouter(
     prefix="/auth",
     tags=["Authentication"]
 )
 
+
+# ============================================================
+# TOKEN RESPONSE
+# ============================================================
 
 def create_token_response(user: User):
 
@@ -54,6 +64,10 @@ def create_token_response(user: User):
 
     )
 
+
+# ============================================================
+# REGISTER
+# ============================================================
 
 @router.post(
     "/register",
@@ -103,6 +117,10 @@ def register(
     return create_token_response(user)
 
 
+# ============================================================
+# LOGIN
+# ============================================================
+
 @router.post(
     "/login",
     response_model=TokenResponse
@@ -137,6 +155,10 @@ def login(
     return create_token_response(user)
 
 
+# ============================================================
+# REFRESH TOKEN
+# ============================================================
+
 @router.post(
     "/refresh",
     response_model=TokenResponse
@@ -155,7 +177,7 @@ def refresh(
         if payload.get("type") != "refresh":
 
             raise HTTPException(
-                status_code=401,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Refresh token required"
             )
 
@@ -170,7 +192,7 @@ def refresh(
     ):
 
         raise HTTPException(
-            status_code=401,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired refresh token"
         )
 
@@ -182,21 +204,23 @@ def refresh(
     if not user:
 
         raise HTTPException(
-            status_code=401,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found"
         )
 
     return create_token_response(user)
-from app.api.deps import get_current_user
 
+
+# ============================================================
+# GET CURRENT USER
+# ============================================================
 
 @router.get(
     "/me",
     response_model=UserResponse
 )
 def get_me(
-    current_user: User =
-        Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
 
     return current_user

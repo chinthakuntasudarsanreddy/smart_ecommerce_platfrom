@@ -1,151 +1,374 @@
-import React, { useState } from "react";
 
-const Cart = ({ cartItems = [] }) => {
-  const [loading, setLoading] = useState(false);
+import { useEffect, useState } from "react";
+import { useAuth0 } from "@auth0/auth0-react";
 
-  const handleCheckout = async () => {
-    if (cartItems.length === 0) {
-      alert("Your cart is empty");
-      return;
-    }
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "http://127.0.0.1:8000";
 
-    // Get logged-in user's database ID
-    const userId = Number(localStorage.getItem("user_id"));
+function Cart() {
+  const [cart, setCart] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-    if (!userId) {
-      alert("User ID not found. Please login again.");
-      return;
-    }
+  const {
+    getAccessTokenSilently,
+    isAuthenticated,
+    isLoading: authLoading,
+    loginWithRedirect,
+  } = useAuth0();
 
+  const loadCart = async () => {
     try {
       setLoading(true);
+      setError("");
+
+      const token = await getAccessTokenSilently();
 
       const response = await fetch(
-        "http://127.0.0.1:8000/payment/create-checkout-session",
+        `${API_URL}/cart/`,
         {
-          method: "POST",
-
+          method: "GET",
           headers: {
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-
-          body: JSON.stringify({
-            user_id: userId,
-
-            items: cartItems.map((item) => ({
-              product_id: item.id,
-              name: item.name,
-              price: Number(item.price),
-              quantity: Number(item.quantity),
-            })),
-          }),
         }
       );
 
-      const data = await response.json();
+      const data = await response
+        .json()
+        .catch(() => ({}));
+
+      console.log(
+        "GET /cart/:",
+        response.status,
+        data
+      );
+
+      if (response.status === 401) {
+        throw new Error(
+          "Your session is not authorized. Please log in again."
+        );
+      }
 
       if (!response.ok) {
-        console.error("Backend error:", data);
-
-        alert(
+        throw new Error(
           data.detail ||
-          "Unable to start checkout"
-        );
-
-        return;
-      }
-
-      if (data.checkout_url) {
-        window.location.href = data.checkout_url;
-      } else {
-        alert(
-          "Checkout URL was not returned by server"
+            "Failed to load cart"
         );
       }
 
-    } catch (error) {
-      console.error(
-        "Checkout error:",
-        error
+      setCart(data);
+    } catch (err) {
+      console.error("Cart error:", err);
+      setError(
+        err.message ||
+          "Failed to load cart"
       );
-
-      alert(
-        "Unable to connect to payment server"
-      );
-
     } finally {
       setLoading(false);
     }
   };
 
-  const totalAmount = cartItems.reduce(
-    (total, item) =>
-      total +
-      Number(item.price) *
-      Number(item.quantity),
-    0
-  );
+  useEffect(() => {
+    if (authLoading) {
+      return;
+    }
 
-  return (
-    <div>
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
 
-      <h1>Shopping Cart</h1>
+    loadCart();
+  }, [authLoading, isAuthenticated]);
 
-      {cartItems.length === 0 ? (
+  const updateQuantity = async (
+    productId,
+    quantity
+  ) => {
+    const newQuantity = Number(quantity);
+
+    if (newQuantity <= 0) {
+      await removeItem(productId);
+      return;
+    }
+
+    try {
+      setError("");
+
+      const token =
+        await getAccessTokenSilently();
+
+      const response = await fetch(
+        `${API_URL}/cart/update`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            product_id: productId,
+            quantity: newQuantity,
+          }),
+        }
+      );
+
+      const data = await response
+        .json()
+        .catch(() => ({}));
+
+      console.log(
+        "PUT /cart/update:",
+        response.status,
+        data
+      );
+
+      if (response.status === 401) {
+        throw new Error(
+          "Your session is not authorized. Please log in again."
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.detail ||
+            "Failed to update quantity"
+        );
+      }
+
+      setCart(data);
+    } catch (err) {
+      console.error(
+        "Update cart error:",
+        err
+      );
+
+      setError(
+        err.message ||
+          "Failed to update quantity"
+      );
+    }
+  };
+
+  const removeItem = async (productId) => {
+    try {
+      setError("");
+
+      const token =
+        await getAccessTokenSilently();
+
+      const response = await fetch(
+        `${API_URL}/cart/remove`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            product_id: productId,
+          }),
+        }
+      );
+
+      const data = await response
+        .json()
+        .catch(() => ({}));
+
+      console.log(
+        "DELETE /cart/remove:",
+        response.status,
+        data
+      );
+
+      if (response.status === 401) {
+        throw new Error(
+          "Your session is not authorized. Please log in again."
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.detail ||
+            "Failed to remove item"
+        );
+      }
+
+      setCart(data);
+    } catch (err) {
+      console.error(
+        "Remove cart item error:",
+        err
+      );
+
+      setError(
+        err.message ||
+          "Failed to remove item"
+      );
+    }
+  };
+
+  if (authLoading) {
+    return <h2>Checking authentication...</h2>;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div>
+        <h2>
+          Please log in to view your cart.
+        </h2>
+
+        <button
+          onClick={() =>
+            loginWithRedirect()
+          }
+        >
+          Login
+        </button>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return <h2>Loading cart...</h2>;
+  }
+
+  if (error) {
+    return (
+      <div>
+        <h2>Cart Error</h2>
+
+        <p>{error}</p>
+
+        <button onClick={loadCart}>
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (!cart) {
+    return <h2>Cart is unavailable.</h2>;
+  }
+
+  if (
+    !cart.items ||
+    cart.items.length === 0
+  ) {
+    return (
+      <div className="page">
+        <h1>Shopping Cart 🛒</h1>
 
         <p>Your cart is empty.</p>
 
-      ) : (
+        <button
+          onClick={() =>
+            (window.location.href =
+              "/products")
+          }
+        >
+          Continue Shopping
+        </button>
+      </div>
+    );
+  }
 
-        <>
+  return (
+    <div className="page">
+      <h1>Shopping Cart 🛒</h1>
 
-          {cartItems.map((item) => (
+      {cart.items.map((item) => (
+        <div
+          key={item.product_id}
+          className="cart-item"
+        >
+          <h3>{item.product_name}</h3>
 
-            <div key={item.id}>
+          <p>
+            Price: ₹{item.price}
+          </p>
 
-              <h3>{item.name}</h3>
+          <div>
+            <button
+              onClick={() =>
+                updateQuantity(
+                  item.product_id,
+                  item.quantity - 1
+                )
+              }
+            >
+              −
+            </button>
 
-              <p>
-                Price: ₹{item.price}
-              </p>
+            <span
+              style={{
+                margin: "0 15px",
+                fontWeight: "bold",
+              }}
+            >
+              {item.quantity}
+            </span>
 
-              <p>
-                Quantity: {item.quantity}
-              </p>
+            <button
+              onClick={() =>
+                updateQuantity(
+                  item.product_id,
+                  item.quantity + 1
+                )
+              }
+            >
+              +
+            </button>
+          </div>
 
-              <p>
-                Subtotal: ₹
-                {
-                  Number(item.price) *
-                  Number(item.quantity)
-                }
-              </p>
-
-              <hr />
-
-            </div>
-
-          ))}
-
-          <h2>
-            Total: ₹{totalAmount}
-          </h2>
+          <p>
+            Item Total: ₹
+            {item.item_total}
+          </p>
 
           <button
-            onClick={handleCheckout}
-            disabled={loading}
+            onClick={() =>
+              removeItem(item.product_id)
+            }
           >
-            {loading
-              ? "Processing..."
-              : "Checkout & Pay"}
+            🗑️ Remove
           </button>
 
-        </>
+          <hr />
+        </div>
+      ))}
 
-      )}
+      <div className="cart-summary">
+        <h3>
+          Cart Total: ₹
+          {cart.cart_total}
+        </h3>
 
+        <h3>
+          Tax (18%): ₹
+          {cart.tax}
+        </h3>
+
+        <h2>
+          Grand Total: ₹
+          {cart.grand_total}
+        </h2>
+
+        <button
+          onClick={() =>
+            (window.location.href =
+              "/payment")
+          }
+        >
+          💳 Proceed to Payment
+        </button>
+      </div>
     </div>
   );
-};
+}
 
 export default Cart;

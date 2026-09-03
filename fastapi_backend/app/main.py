@@ -12,18 +12,25 @@ from app.api.products import router as products_router
 from app.api.cart import router as cart_router
 from app.api.checkout import router as checkout_router
 from app.api.stripe_webhook import router as stripe_webhook_router
-from app.api.orders import router as orders_router
-from app.api.returns import router as returns_router
+from app.api.orders import router as api_orders_router
+from app.api.order_status import router as order_status_router
 
 # ============================================================
 # OTHER ROUTES
 # ============================================================
 
+from app.routes.orders import router as orders_router
 from app.routes.payment import router as payment_router
 from app.routes.notifications import router as notification_router
 from app.routes.websocket import router as websocket_router
-from app.routes.return_request import router as return_request_router
+
+from app.routes.return_request import (
+    router as return_request_router,
+    admin_router as admin_return_router,
+)
+
 from app.routes.user import router as user_router
+from app.routes.refund import router as refund_router
 
 # ============================================================
 # WEBSOCKET MANAGER
@@ -39,7 +46,7 @@ from app.websocket.manager import manager
 app = FastAPI(
     title="Smart E-Commerce Platform",
     version="1.0.0",
-    description="Smart E-Commerce Platform Backend"
+    description="Smart E-Commerce Platform Backend",
 )
 
 
@@ -64,7 +71,7 @@ app.add_middleware(
 
 
 # ============================================================
-# ROUTERS
+# API ROUTERS
 # ============================================================
 
 app.include_router(auth_router)
@@ -77,18 +84,42 @@ app.include_router(payment_router)
 app.include_router(stripe_webhook_router)
 
 app.include_router(notification_router)
-app.include_router(websocket_router)
 
 app.include_router(user_router)
 
-# Orders - only ONE orders router
+# ============================================================
+# ORDERS
+# ============================================================
+
+# API orders router
+app.include_router(api_orders_router)
+
+# Existing orders router
 app.include_router(orders_router)
 
-# Return API
-app.include_router(returns_router)
+app.include_router(order_status_router)
 
-# Existing return-request routes
+
+# ============================================================
+# RETURN REQUEST
+# ============================================================
+
 app.include_router(return_request_router)
+app.include_router(admin_return_router)
+
+
+# ============================================================
+# REFUND
+# ============================================================
+
+app.include_router(refund_router)
+
+
+# ============================================================
+# OTHER WEBSOCKET ROUTES
+# ============================================================
+
+app.include_router(websocket_router)
 
 
 # ============================================================
@@ -99,7 +130,7 @@ app.include_router(return_request_router)
 def root():
     return {
         "message": "Smart E-Commerce Platform API",
-        "status": "running"
+        "status": "running",
     }
 
 
@@ -110,33 +141,69 @@ def root():
 @app.get("/health")
 def health():
     return {
-        "status": "healthy"
+        "status": "healthy",
     }
 
 
 # ============================================================
 # NOTIFICATION WEBSOCKET
 # ============================================================
+#
+# Frontend connects to:
+#
+# ws://127.0.0.1:8000/ws/notifications/{user_id}
+#
+# Example:
+#
+# ws://127.0.0.1:8000/ws/notifications/1
+#
+# ============================================================
 
 @app.websocket("/ws/notifications/{user_id}")
 async def notification_websocket(
     websocket: WebSocket,
-    user_id: int
+    user_id: int,
 ):
 
-    await manager.connect(
-        user_id,
-        websocket
+    print(
+        f"WebSocket connection request from user {user_id}"
     )
 
     try:
 
+        # Accept and register connection
+        await manager.connect(
+            user_id,
+            websocket,
+        )
+
+        print(
+            f"WebSocket connected successfully for user {user_id}"
+        )
+
+        # Keep connection alive
         while True:
+
             await websocket.receive_text()
 
     except WebSocketDisconnect:
 
+        print(
+            f"WebSocket disconnected for user {user_id}"
+        )
+
         manager.disconnect(
             user_id,
-            websocket
+            websocket,
+        )
+
+    except Exception as e:
+
+        print(
+            f"WebSocket error for user {user_id}: {e}"
+        )
+
+        manager.disconnect(
+            user_id,
+            websocket,
         )

@@ -1,26 +1,32 @@
 
+from pydantic import BaseModel
+from typing import Optional
 from datetime import datetime
-
-from pydantic import BaseModel, ConfigDict
-
-
-class ReturnRequestInfo(BaseModel):
-    id: int
-    reason: str
-    comment: str | None = None
-    status: str
-    created_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 class OrderResponse(BaseModel):
     id: int
     user_id: int
-    status: str
-    total_amount: float | None = None
-    created_at: datetime
-    delivered_at: datetime | None = None
-    return_request: ReturnRequestInfo | None = None
+    total: float
+    order_status: str
+    payment_status: str
+    created_at: Optional[datetime] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        from_attributes = True
+
+
+class ReturnRequestCreate(BaseModel):
+    reason: str
+
+
+class ReturnRequestResponse(BaseModel):
+    id: int
+    order_id: int
+    user_id: int
+    reason: str
+    status: str
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

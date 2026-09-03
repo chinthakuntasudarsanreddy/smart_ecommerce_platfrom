@@ -1,6 +1,7 @@
+
 import { useEffect, useState } from "react";
 
-function Products() {
+function Products({ addToCart }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -11,6 +12,7 @@ function Products() {
         if (!response.ok) {
           throw new Error("Failed to fetch products");
         }
+
         return response.json();
       })
       .then((data) => {
@@ -24,35 +26,17 @@ function Products() {
       });
   }, []);
 
-  const addToCart = async (product) => {
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:8000/cart/add?user_id=1`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            product_id: product.id,
-            quantity: 1,
-          }),
-        }
-      );
+  const handleAddToCart = (product) => {
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.detail || "Unable to add product");
-        return;
-      }
-
-      alert(`${product.name} added to cart`);
-    } catch (error) {
-      console.error(error);
-      alert("Unable to connect to backend");
+    if (!addToCart) {
+      console.error("addToCart function was not provided");
+      alert("Cart system is not configured");
+      return;
     }
+
+    addToCart(product);
   };
+
 
   if (loading) {
     return <h2>Loading products...</h2>;
@@ -62,13 +46,21 @@ function Products() {
     return <h2>{error}</h2>;
   }
 
+
   return (
     <div className="page">
+
       <h1>Products</h1>
 
       <div className="product-grid">
+
         {products.map((product) => (
-          <div className="product-card" key={product.id}>
+
+          <div
+            className="product-card"
+            key={product.id}
+          >
+
             {product.image_url && (
               <img
                 src={product.image_url}
@@ -76,22 +68,43 @@ function Products() {
               />
             )}
 
-            <h2>{product.name}</h2>
+            <h2>
+              {product.name}
+            </h2>
 
-            <p>{product.description}</p>
+            <p>
+              {product.description}
+            </p>
 
-            <h3>₹{product.price}</h3>
+            <h3>
+              ₹{product.price}
+            </h3>
 
-            <p>Category: {product.category}</p>
+            <p>
+              Category: {product.category}
+            </p>
 
-            <p>Stock: {product.stock}</p>
+            <p>
+              Stock: {product.stock}
+            </p>
 
-            <button onClick={() => addToCart(product)}>
-              Add to Cart
+            <button
+              onClick={() =>
+                handleAddToCart(product)
+              }
+              disabled={product.stock <= 0}
+            >
+              {product.stock <= 0
+                ? "Out of Stock"
+                : "Add to Cart"}
             </button>
+
           </div>
+
         ))}
+
       </div>
+
     </div>
   );
 }

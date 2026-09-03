@@ -1,3 +1,4 @@
+
 from django.urls import path
 
 from . import views
@@ -6,11 +7,43 @@ from . import reports
 
 urlpatterns = [
 
+    # =========================================
+    # DASHBOARD
+    # =========================================
+
     path(
         "",
         views.dashboard,
         name="dashboard",
     ),
+
+
+    # =========================================
+    # RETURN REQUESTS
+    # =========================================
+
+    path(
+        "returns/",
+        views.return_requests,
+        name="return_requests",
+    ),
+
+    path(
+        "returns/<int:return_id>/approve/",
+        views.approve_return_request,
+        name="approve_return_request",
+    ),
+
+    path(
+        "returns/<int:return_id>/reject/",
+        views.reject_return_request,
+        name="reject_return_request",
+    ),
+
+
+    # =========================================
+    # REPORTS
+    # =========================================
 
     path(
         "reports/orders/csv/",

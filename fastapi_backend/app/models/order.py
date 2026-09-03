@@ -1,6 +1,6 @@
-from sqlalchemy import Column, Integer, Numeric, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
+from datetime import datetime
 
 from app.core.database import Base
 
@@ -8,19 +8,11 @@ from app.core.database import Base
 class Order(Base):
     __tablename__ = "orders"
 
-    # ============================================================
-    # PRIMARY KEY
-    # ============================================================
-
     id = Column(
         Integer,
         primary_key=True,
         index=True
     )
-
-    # ============================================================
-    # USER
-    # ============================================================
 
     user_id = Column(
         Integer,
@@ -28,28 +20,10 @@ class Order(Base):
         nullable=False
     )
 
-    # ============================================================
-    # ORDER TOTAL
-    # ============================================================
-
     total = Column(
-        Numeric(10, 2),
+        Float,
         nullable=False
     )
-
-    # ============================================================
-    # PAYMENT STATUS
-    # ============================================================
-
-    payment_status = Column(
-        String(50),
-        default="pending",
-        nullable=False
-    )
-
-    # ============================================================
-    # ORDER STATUS
-    # ============================================================
 
     order_status = Column(
         String(50),
@@ -57,26 +31,23 @@ class Order(Base):
         nullable=False
     )
 
-    # ============================================================
-    # CREATED DATE
-    # ============================================================
+    payment_status = Column(
+        String(50),
+        default="pending",
+        nullable=False
+    )
 
     created_at = Column(
-        DateTime(timezone=True),
-        server_default=func.now()
-    )
-
-    # ============================================================
-    # DELIVERED DATE
-    # ============================================================
-
-    delivered_at = Column(
         DateTime,
-        nullable=True
+        default=datetime.utcnow
     )
+    delivered_at = Column(
+    DateTime,
+    nullable=True
+)
 
     # ============================================================
-    # RELATIONSHIP WITH USER
+    # USER
     # ============================================================
 
     user = relationship(
@@ -85,16 +56,17 @@ class Order(Base):
     )
 
     # ============================================================
-    # RELATIONSHIP WITH ORDER ITEMS
+    # ORDER ITEMS
     # ============================================================
 
     items = relationship(
         "OrderItem",
-        back_populates="order"
+        back_populates="order",
+        cascade="all, delete-orphan"
     )
 
     # ============================================================
-    # RELATIONSHIP WITH RETURN REQUESTS
+    # RETURN REQUESTS
     # ============================================================
 
     return_requests = relationship(
@@ -104,7 +76,7 @@ class Order(Base):
     )
 
     # ============================================================
-    # RELATIONSHIP WITH NOTIFICATIONS
+    # NOTIFICATIONS
     # ============================================================
 
     notifications = relationship(

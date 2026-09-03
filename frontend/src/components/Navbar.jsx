@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -18,91 +19,28 @@ function Navbar() {
       );
 
       if (!response.ok) {
-        throw new Error(
-          "Failed to fetch notifications"
-        );
+        throw new Error("Failed to fetch notifications");
       }
 
       const data = await response.json();
 
       setUnreadCount(data.length);
-
     } catch (error) {
-      console.error(
-        "Notification error:",
-        error
-      );
+      console.error("Notification error:", error);
     }
   };
 
-
   // ---------------------------------------------
-  // WebSocket
+  // Load unread notifications
   // ---------------------------------------------
 
   useEffect(() => {
-
     fetchUnreadNotifications();
-
-    const socket = new WebSocket(
-      `ws://127.0.0.1:8000/ws/notifications/${userId}`
-    );
-
-    socket.onopen = () => {
-      console.log(
-        "Navbar notification WebSocket connected"
-      );
-    };
-
-    socket.onmessage = (event) => {
-
-      try {
-
-        const notification =
-          JSON.parse(event.data);
-
-        console.log(
-          "New notification:",
-          notification
-        );
-
-        if (!notification.read_status) {
-          setUnreadCount(
-            (previous) => previous + 1
-          );
-        }
-
-      } catch (error) {
-
-        console.error(
-          "Invalid WebSocket notification:",
-          error
-        );
-
-      }
-
-    };
-
-    socket.onerror = (error) => {
-      console.error(
-        "Navbar WebSocket error:",
-        error
-      );
-    };
-
-    socket.onclose = () => {
-      console.log(
-        "Navbar WebSocket disconnected"
-      );
-    };
-
-
-    return () => {
-      socket.close();
-    };
-
   }, []);
 
+  // ---------------------------------------------
+  // Navbar
+  // ---------------------------------------------
 
   return (
     <nav style={styles.navbar}>
@@ -115,7 +53,6 @@ function Navbar() {
           Smart Ecommerce
         </Link>
       </div>
-
 
       <div style={styles.links}>
 
@@ -139,16 +76,20 @@ function Navbar() {
         >
           Cart
         </Link>
-<Link to="/orders">
-    Orders
-</Link>
+
+        <Link
+          to="/orders"
+          style={styles.link}
+        >
+          Orders
+        </Link>
+
         <Link
           to="/profile"
           style={styles.link}
         >
           Profile
         </Link>
-
 
         {/* Notification Bell */}
 
@@ -162,17 +103,12 @@ function Navbar() {
             🔔
           </span>
 
-
           {unreadCount > 0 && (
-
             <span style={styles.badge}>
-
               {unreadCount > 99
                 ? "99+"
                 : unreadCount}
-
             </span>
-
           )}
 
         </Link>
@@ -183,13 +119,11 @@ function Navbar() {
   );
 }
 
-
 // ---------------------------------------------
 // Styles
 // ---------------------------------------------
 
 const styles = {
-
   navbar: {
     display: "flex",
     justifyContent: "space-between",
@@ -249,6 +183,5 @@ const styles = {
     alignItems: "center"
   }
 };
-
 
 export default Navbar;
